@@ -28,6 +28,8 @@ int main(void) {
   OPENSSL_init_ssl(0, NULL);
 #endif
   AMQP::Address address("amqp://guest:guest@localhost/");
+  // Secure connection.
+  // AMQP::Address address("amqps://guest:guest@localhost/");
   AMQP::TcpConnection connection(&handler, address);
   AMQP::TcpChannel channel(&connection);
   const std::string exchange_ = "exchange";
