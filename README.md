@@ -13,7 +13,7 @@ Build:
 
 ```bash
 # mkdir build && cd build
-# cmake ../src && make
+# cmake .. && make
 ```
 
 ## Secure Connect with SSL
