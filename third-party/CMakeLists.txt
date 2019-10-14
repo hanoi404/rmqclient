@@ -12,7 +12,7 @@ ExternalProject_Add(libamqpcpp
     # URL "${CMAKE_CURRENT_SOURCE_DIR}/libamqpcpp-4.1.5.tar.gz"
     # URL_MD5 "66fa995d432adade65ea6274799f2bed"
     URL "${CMAKE_CURRENT_SOURCE_DIR}/libamqpcpp-4.1.5-ssl-fixed.tar.gz"
-    URL_MD5 "ee97f3b86a0a357c82aefdaab4e8050e"
+    URL_MD5 "2b70ad94afd09424e0e274dddf12733e"
     CMAKE_ARGS -Wno-dev "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>" "-DAMQP-CPP_LINUX_TCP=ON"
     INSTALL_DIR ${AMQPCPP_ROOT}
 )
