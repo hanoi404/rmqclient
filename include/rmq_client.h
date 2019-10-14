@@ -29,8 +29,8 @@ namespace librmqclient {
 //   'amqps://guest:guest@localhost/'
 //   'amqps://guest:guest@localhost/vhost'
 // Description:
-//   @amqp           nornal tcp connect type (port 5672);
-//   @amqps          secure connect with SSL (port 5671);
+//   @amqp           ordinary tcp connection type (port 5672);
+//   @amqps          secure connection with SSL/TLS (port 5671);
 //   @guest:guest    username:password;
 //   @localhost      hostname or ip;
 //   @vhost          virtual host, optional.
@@ -39,6 +39,7 @@ namespace librmqclient {
 class RmqClient {
  public:
   // Constructor.
+  //
   RmqClient() = default;
   RmqClient(const std::string &consumer_url,
             const std::string &consumer_exchange,
@@ -76,9 +77,13 @@ class RmqClient {
   // RmqClient is neither copyable nor movable.
   RmqClient(const RmqClient &) = delete;
   RmqClient& operator=(const RmqClient &) = delete;
+
   // Destructor.
+  //
   ~RmqClient();
 
+  // Manual initialization.
+  //
   // If using the default constructor, have to use this method to
   // init socket connection information.
   void InitConsumerConnect(const std::string &url) {
@@ -87,7 +92,6 @@ class RmqClient {
   void InitProducerConnect(const std::string &url) {
     producer_url_ = url;
   }
-
   // If using the default constructor, select one of the following
   // initialization methods.
   void InitConsumer(const std::string &exchange, const std::string &queue,
@@ -101,6 +105,8 @@ class RmqClient {
     producer_routekey_ = routekey;
   }
 
+  // For producer.
+  //
   // Use the specified 'exchange' and 'routekey'.
   int SendMessage(const std::string &exchange, const std::string &routekey,
                   const char *message, const int &size) {
@@ -112,18 +118,18 @@ class RmqClient {
                   const std::vector<char> &message) {
     return SendMessage(exchange, routekey, &message.front(), message.size());
   }
-
   // Common send message method.
   int SendMessage(const char *message, const int &size);
   int SendMessage(const std::vector<char> &message) {
     return SendMessage(&message.front(), message.size());
   }
 
+  // For consumer.
+  //
   // Current message count.
   int message_num(void) const {
     return recv_message_.size();
   }
-
   // Get the first message in queue.
   int message(std::vector<char> *data) {
     if (recv_message_.empty()) {
@@ -134,10 +140,7 @@ class RmqClient {
     recv_message_.pop_front();
     return 0;
   }
-
   bool service_is_running(void) { return service_is_running_; }
-
-  // For consumer.
   void Run(void);
   void Stop(void);
 
@@ -145,7 +148,6 @@ class RmqClient {
   // Thread handler.
   void RecvService(void);
 
-  std::thread service_thread_;
   bool service_is_running_ = false;
   // RabbitMQ parameters.
   std::string consumer_url_ = "";
@@ -155,10 +157,11 @@ class RmqClient {
   std::string producer_url_ = "";
   std::string producer_exchange_ = "";
   std::string producer_routekey_ = "";
-  std::list<std::vector<char>> recv_message_;
   // Run control.
   void *ev_loop_ptr_ = nullptr;
   void *connection_ptr_ = nullptr;
+  std::thread service_thread_;
+  std::list<std::vector<char>> recv_message_;
 };
 
 }  // namespace librmqclient
