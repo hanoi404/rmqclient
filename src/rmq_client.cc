@@ -80,7 +80,10 @@ int RmqClient::SendMessage(const char *message, const int &size) {
                           message, size);
           ev_break(loop, EVBREAK_ALL); });
   ev_run(loop, 0);
+
   // Waiting to exit the loop.
+
+  ev_loop_destroy(loop);
   connection.close();
   return ret;
 }
@@ -140,7 +143,10 @@ void RmqClient::RecvService(void) {
   ev_loop_ptr_ = &loop;
   connection_ptr_ = &connection;
   ev_run(loop, 0);
+
   // Waiting to exit the loop.
+
+  ev_loop_destroy(loop);
   connection.close();
   service_is_running_ = false;
 }

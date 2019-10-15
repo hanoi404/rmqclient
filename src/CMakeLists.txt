@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
 # Build
-set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/bin)
 
 add_library(${PROJECT_NAME}
   rmq_client.cc
@@ -18,7 +17,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
   dl
 )
 
+
 # Install
+
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}Config ARCHIVE DESTINATION lib
 )
@@ -36,6 +37,6 @@ export(TARGETS ${PROJECT_NAME} FILE ${PROJECT_NAME}Config.cmake)
 set(DEST_DIR "${CMAKE_INSTALL_PREFIX}")
 
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}}/../include/>
-  $<INSTALL_INTERFACE:include/>
+  $<BUILD_INTERFACE:${rmqclient_include_dirs}>
+  $<INSTALL_INTERFACE:${CMAKE_OUTPUT_INCLUDE_DIR}>
 )

@@ -10,7 +10,11 @@ option(RMQCLIENT_BUILD_EXAMPLES "Build rmqclient examples" OFF)
 
 add_definitions("-std=c++11 -pthread")
 
-include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(CMAKE_LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/lib)
+set(CMAKE_INCLUDE_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/include)
+
+set(rmqclient_include_dirs ${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(SYSTEM ${rmqclient_include_dirs})
 
 add_subdirectory(src)
 add_subdirectory(third-party)
