@@ -158,7 +158,6 @@ class RmqClient {
   std::string producer_exchange_ = "";
   std::string producer_routekey_ = "";
   // Run control.
-  void *ev_loop_ptr_ = nullptr;
   void *connection_ptr_ = nullptr;
   std::thread service_thread_;
   std::list<std::vector<char>> recv_message_;

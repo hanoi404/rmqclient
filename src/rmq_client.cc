@@ -16,9 +16,9 @@
 
 #include <stdint.h>
 
-#include <ev.h>
+#include <event2/event.h>
 #include <amqpcpp.h>
-#include <amqpcpp/libev.h>
+#include <amqpcpp/libevent.h>
 #include <openssl/ssl.h>
 #include <openssl/opensslv.h>
 
@@ -27,9 +27,10 @@ namespace librmqclient {
 
 // #define LOG_DEBUG  1
 
-class MyHandler : public AMQP::LibEvHandler {
+class MyHandler : public AMQP::LibEventHandler {
  public:
-  explicit MyHandler(struct ev_loop *loop) : AMQP::LibEvHandler(loop) { }
+  explicit MyHandler(struct event_base *evbase) :
+      AMQP::LibEventHandler(evbase), evbase_(evbase) { }
   MyHandler(const MyHandler&) = delete;
   MyHandler& operator=(const MyHandler&) = delete;
   virtual ~MyHandler() = default;
@@ -38,11 +39,15 @@ class MyHandler : public AMQP::LibEvHandler {
   void onError(AMQP::TcpConnection *connection,
       const char *message) override {
     std::cout << "error: " << message << std::endl;
+    event_base_loopbreak(evbase_);
   }
+  struct event_base *evbase_ = nullptr;
 };
 
 RmqClient::~RmqClient() {
-  Stop();
+  if (service_is_running_) {
+    Stop();
+  }
   if (!recv_message_.empty()) {
     recv_message_.clear();
   }
@@ -50,8 +55,8 @@ RmqClient::~RmqClient() {
 
 int RmqClient::SendMessage(const char *message, const int &size) {
   int ret = 0;
-  auto *loop = EV_DEFAULT;
-  MyHandler handler(loop);
+  auto evbase = event_base_new();
+  MyHandler handler(evbase);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSL_library_init();
 #else
@@ -60,14 +65,15 @@ int RmqClient::SendMessage(const char *message, const int &size) {
   AMQP::Address address(producer_url_);
   AMQP::TcpConnection connection(&handler, address);
   AMQP::TcpChannel channel(&connection);
-  channel.onError([&loop, &ret](const char *err_message) {
+  channel.onError([&evbase, &ret](const char *err_message) {
       std::cout << "Channel error: " << err_message << std::endl;
-      ev_break(loop, EVBREAK_ALL);
+      event_base_loopbreak(evbase);
       ret = -1; });
   channel.declareExchange(producer_exchange_, AMQP::topic)
       .onError([&](const char* msg) {
           std::cout << "ERROR: " << msg << std::endl;
-          ev_break(loop, EVBREAK_ALL); })
+          event_base_loopbreak(evbase);
+       })
       .onSuccess([&]() {
 #ifdef LOG_DEBUG
           printf("Send data[%lu]: ", size);
@@ -78,13 +84,13 @@ int RmqClient::SendMessage(const char *message, const int &size) {
 #endif
           channel.publish(producer_exchange_, producer_routekey_,
                           message, size);
-          ev_break(loop, EVBREAK_ALL); });
-  ev_run(loop, 0);
+          connection.close();
+       });
 
-  // Waiting to exit the loop.
+  // Run loop.
+  event_base_dispatch(evbase);
 
-  ev_loop_destroy(loop);
-  connection.close();
+  event_base_free(evbase);
   return ret;
 }
 
@@ -99,10 +105,6 @@ void RmqClient::Run(void) {
 void RmqClient::Stop(void) {
   if (service_is_running_ == true) {
     service_is_running_ = false;
-    if (ev_loop_ptr_ != nullptr) {
-      ev_break(reinterpret_cast<struct ev_loop *>(ev_loop_ptr_), EVBREAK_ALL);
-      ev_loop_ptr_ = nullptr;
-    }
     if (connection_ptr_ != nullptr) {
       reinterpret_cast<AMQP::TcpConnection *>(connection_ptr_)->close();
       connection_ptr_ = nullptr;
@@ -112,8 +114,8 @@ void RmqClient::Stop(void) {
 }
 
 void RmqClient::RecvService(void) {
-  auto *loop = EV_DEFAULT;
-  MyHandler handler(loop);
+  auto evbase = event_base_new();
+  MyHandler handler(evbase);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
   SSL_library_init();
 #else
@@ -122,14 +124,16 @@ void RmqClient::RecvService(void) {
   AMQP::Address address(consumer_url_);
   AMQP::TcpConnection connection(&handler, address);
   AMQP::TcpChannel channel(&connection);
-  channel.onError([&loop](const char *err_message) {
+  channel.onError([&evbase](const char *err_message) {
       std::cout << "Channel error: " << err_message << std::endl;
-      ev_break(loop, EVBREAK_ALL); });
+      event_base_loopbreak(evbase);
+  });
   channel.declareExchange(consumer_exchange_, AMQP::topic);
   channel.declareQueue(consumer_queue_, AMQP::exclusive);
   channel.bindQueue(consumer_exchange_, consumer_queue_, consumer_routekey_);
   channel.consume(consumer_queue_, AMQP::noack)
       .onReceived([&](const AMQP::Message& m, uint64_t, bool) {
+           if (m.bodySize() <= 0) printf("Nothing\n");
            std::vector<char> message(m.body(), m.body() + m.bodySize());
 #ifdef LOG_DEBUG
           printf("Received data[%lu]: ", message.size());
@@ -140,14 +144,16 @@ void RmqClient::RecvService(void) {
 #endif
           recv_message_.push_back(message);
       });
-  ev_loop_ptr_ = &loop;
   connection_ptr_ = &connection;
-  ev_run(loop, 0);
+  // Run loop.
+  event_base_dispatch(evbase);
 
-  // Waiting to exit the loop.
-
-  ev_loop_destroy(loop);
-  connection.close();
+  event_base_free(evbase);
+  // Disconnect.
+  if (connection_ptr_ != nullptr) {
+    connection.close();
+    connection_ptr_ = nullptr;
+  }
   service_is_running_ = false;
 }
 
