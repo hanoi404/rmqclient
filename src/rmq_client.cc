@@ -83,7 +83,7 @@ int RmqClient::SendMessage(const char *message, const int &size) {
           printf("\n");
 #endif
           channel.publish(producer_exchange_, producer_routekey_,
-                          message, size);
+                          message, size, 0);
           connection.close();
        });
 
