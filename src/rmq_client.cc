@@ -98,7 +98,8 @@ void RmqClient::Run(void) {
   if (service_is_running_ == false) {
     service_is_running_ = true;
     service_thread_ = std::thread(&RmqClient::RecvService, this);
-    printf("Start listen service...\n");
+    service_thread_.detach();
+    printf("Listen service starting...\n");
   }
 }
 
@@ -109,7 +110,6 @@ void RmqClient::Stop(void) {
       reinterpret_cast<AMQP::TcpConnection *>(connection_ptr_)->close();
       connection_ptr_ = nullptr;
     }
-    service_thread_.join();
   }
 }
 
