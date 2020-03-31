@@ -26,11 +26,8 @@ namespace librmqclient {
 // URL example:
 //   'amqp://guest:guest@localhost/'
 //   'amqp://guest:guest@localhost/vhost'
-//   'amqps://guest:guest@localhost/'
-//   'amqps://guest:guest@localhost/vhost'
 // Description:
 //   @amqp           ordinary tcp connection type (port 5672);
-//   @amqps          secure connection with SSL/TLS (port 5671);
 //   @guest:guest    username:password;
 //   @localhost      hostname or ip;
 //   @vhost          virtual host, optional.

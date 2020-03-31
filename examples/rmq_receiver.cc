@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+#include <stdio.h>
+#include <unistd.h>
+
+#include <vector>
+
 #include "rmq_client.h"
 
 
@@ -23,8 +29,18 @@ int main(void) {
   rmq_client.InitConsumer("exchange", "queue", "routekey");
   rmq_client.Run();
 
-  // Do something else.
-  while (1) continue;
+  std::vector<char> msg;
+  while (1) {
+    if (rmq_client.message_num() > 0) {
+      if (rmq_client.message(&msg) == 0) {
+        msg.push_back(0x0);
+        printf("Recv: %s\n", &msg.front());
+        break;
+      }
+    }
+    sleep(1);
+  }
+  rmq_client.Stop();
 
   return 0;
 }

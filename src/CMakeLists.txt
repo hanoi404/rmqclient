@@ -6,15 +6,12 @@ add_library(${PROJECT_NAME}
   rmq_client.cc
 )
 
-add_dependencies(${PROJECT_NAME} libamqpcpp openssl libevent)
+add_dependencies(${PROJECT_NAME} libamqpcpp libevent)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-  openssl-ssl-static
-  openssl-crypto-static
   amqpcpp-static
   pthread
   event-static
-  event-openssl-static
   event-pthreads-static
   dl
 )

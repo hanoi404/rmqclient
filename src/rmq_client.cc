@@ -19,8 +19,6 @@
 #include <event2/event.h>
 #include <amqpcpp.h>
 #include <amqpcpp/libevent.h>
-#include <openssl/ssl.h>
-#include <openssl/opensslv.h>
 
 
 namespace librmqclient {
@@ -57,11 +55,6 @@ int RmqClient::SendMessage(const char *message, const int &size) {
   int ret = 0;
   auto evbase = event_base_new();
   MyHandler handler(evbase);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  SSL_library_init();
-#else
-  OPENSSL_init_ssl(0, NULL);
-#endif
   AMQP::Address address(producer_url_);
   AMQP::TcpConnection connection(&handler, address);
   AMQP::TcpChannel channel(&connection);
@@ -116,11 +109,6 @@ void RmqClient::Stop(void) {
 void RmqClient::RecvService(void) {
   auto evbase = event_base_new();
   MyHandler handler(evbase);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-  SSL_library_init();
-#else
-  OPENSSL_init_ssl(0, NULL);
-#endif
   AMQP::Address address(consumer_url_);
   AMQP::TcpConnection connection(&handler, address);
   AMQP::TcpChannel channel(&connection);
