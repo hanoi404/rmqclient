@@ -16,22 +16,13 @@ Build:
 # cmake .. && make
 ```
 
-## Secure Connect with SSL
-
-Certificate file dependency, make your own certificate file and replace the listed file:
+BUild example:
 
 ```bash
-/etc/rabbitmq/ssl/ca/cacert.pem
-/etc/rabbitmq/ssl/client/rabbitmq_client.cert.pem
-/etc/rabbitmq/ssl/client/rabbitmq_client.key.pem
-```  
-
-Enable:
-
-In AMQP::Address object, using the `amqps://` protocol:
-
-```cpp
-AMQP::Address address("amqps://guest:guest@localhost/");
+# cd build
+# cmake .. -DRMQCLIENT_BUILD_EXAMPLES=ON && make
+./examples/rmq_receiver
+./examples/rmq_sender
 ```
 
 ## Reference
